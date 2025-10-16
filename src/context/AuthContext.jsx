@@ -1,5 +1,6 @@
 import axios from "axios";
 import { createContext, useContext, useEffect, useState } from "react";
+
 const API_URL = import.meta.env.VITE_API_URL;
 const AuthContext = createContext();
 
@@ -12,15 +13,11 @@ export const AuthProvider = ({ children }) => {
   const loginUser = async (email, password, role = "user") => {
     try {
       const url =
-          role === "admin"
-              ? `${API_URL}/api/auth/admin-login`
-              : `${API_URL}/api/auth/login`;
+        role === "admin"
+          ? `${API_URL}/api/auth/admin-login`
+          : `${API_URL}/api/auth/login`;
 
-      const res = await axios.post(
-          url,
-          { email, password },
-          { withCredentials: true }
-      );
+      const res = await axios.post(url, { email, password }, { withCredentials: true });
 
       if (res.data?.user) {
         setUser(res.data.user);
@@ -41,9 +38,9 @@ export const AuthProvider = ({ children }) => {
       if (!user) return;
 
       const url =
-          user.role === "admin"
-              ? `${API_URL}/api/auth/admin-logout`
-              : `${API_URL}/api/auth/logout`;
+        user.role === "admin"
+          ? `${API_URL}/api/auth/admin-logout`
+          : `${API_URL}/api/auth/logout`;
 
       await axios.post(url, {}, { withCredentials: true });
       setUser(null);
@@ -57,13 +54,11 @@ export const AuthProvider = ({ children }) => {
   const checkSession = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/auth/me`, {
-        withCredentials: true,
-      });
+      const res = await axios.get(`${API_URL}/api/profile`, { withCredentials: true });
 
-      if (res.data?.user) {
-        setUser(res.data.user);
-        setIsAdmin(res.data.user.role === "admin");
+      if (res.data) {
+        setUser(res.data);
+        setIsAdmin(res.data.role === "admin");
       } else {
         setUser(null);
         setIsAdmin(false);
@@ -77,26 +72,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Run session check on mount
   useEffect(() => {
     checkSession();
   }, []);
 
   return (
-      <AuthContext.Provider
-          value={{
-            user,
-            isAdmin,
-            loading,
-            loginUser,
-            logoutUser,
-            checkSession,
-          }}
-      >
-        {children}
-      </AuthContext.Provider>
+    <AuthContext.Provider value={{ user, isAdmin, loading, loginUser, logoutUser, checkSession }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
-// -------------------- CUSTOM HOOK --------------------
 export const useAuth = () => useContext(AuthContext);
